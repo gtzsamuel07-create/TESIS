@@ -48,12 +48,14 @@ def _validar_entrada(carga_w: float, tension_v: float, fases: int, factor_potenc
 
 
 def _corriente_carga(carga_w: float, tension_v: float, fases: int, factor_potencia: float) -> float:
+    """Calcula corriente con P / (V × FP) en monofásico y P / (√3 × V × FP) en trifásico."""
     if fases == 1:
         return carga_w / (tension_v * factor_potencia)
     return carga_w / (math.sqrt(3) * tension_v * factor_potencia)
 
 
 def _seleccionar_interruptor(corriente_diseno_a: float) -> int:
+    """Devuelve el menor interruptor estándar cuya capacidad cubre la corriente de diseño."""
     for interruptor in INTERRUPTORES_ESTANDAR_A:
         if interruptor >= corriente_diseno_a:
             return interruptor
@@ -64,6 +66,7 @@ def _seleccionar_interruptor(corriente_diseno_a: float) -> int:
 
 
 def _seleccionar_conductor(interruptor_a: int) -> tuple[str, int]:
+    """Devuelve el primer conductor de la tabla base que soporta el interruptor (calibre, ampacidad)."""
     for conductor, ampacidad in CONDUCTORES_COBRE_A_75C:
         if ampacidad >= interruptor_a:
             return conductor, ampacidad
@@ -79,6 +82,21 @@ def calcular_circuito(
     factor_potencia: float = 1.0,
     carga_continua: bool = False,
 ) -> ResultadoCalculo:
+    """Calcula corriente, interruptor y conductor base para un circuito derivado según NOM-001-SEDE-2012.
+
+    Parámetros:
+        carga_w: carga total en watts.
+        tension_v: tensión del sistema en volts.
+        fases: 1 para monofásico o 3 para trifásico.
+        factor_potencia: valor entre 0 y 1.
+        carga_continua: aplica 125% a la corriente de diseño cuando es True.
+
+    Regresa:
+        ResultadoCalculo con valores de corriente calculada, corriente de diseño, interruptor y conductor.
+
+    Lanza:
+        ValueError si los parámetros son inválidos o la tabla base no cubre el resultado.
+    """
     _validar_entrada(carga_w, tension_v, fases, factor_potencia)
     corriente_calculada = _corriente_carga(carga_w, tension_v, fases, factor_potencia)
     corriente_diseno = corriente_calculada * (1.25 if carga_continua else 1.0)
