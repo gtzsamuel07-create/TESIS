@@ -16,9 +16,9 @@ CONDUCTORES_COBRE_A_75C = (
     ("4 AWG", 85),
     ("3 AWG", 100),
 )
-REFERENCIAS_NORMATIVAS = (
+REFERENCIAS_NORMATIVAS = [
     "NOM-001-SEDE-2012 arts. 210, 215, 220, 240 y 310",
-)
+]
 
 
 @dataclass(frozen=True)
@@ -33,7 +33,7 @@ class ResultadoCalculo:
     interruptor_recomendado_a: int
     conductor_recomendado: str
     ampacidad_conductor_a: int
-    referencias: tuple[str, ...]
+    referencias: list[str]
 
 
 def _validar_entrada(carga_w: float, tension_v: float, fases: int, factor_potencia: float) -> None:
@@ -57,14 +57,19 @@ def _seleccionar_interruptor(corriente_diseno_a: float) -> int:
     for interruptor in INTERRUPTORES_ESTANDAR_A:
         if interruptor >= corriente_diseno_a:
             return interruptor
-    raise ValueError("La corriente calculada excede el alcance de esta versión base del programa.")
+    raise ValueError(
+        "La corriente de diseño "
+        f"({corriente_diseno_a:.2f} A) excede el alcance de esta versión base del programa."
+    )
 
 
 def _seleccionar_conductor(interruptor_a: int) -> tuple[str, int]:
     for conductor, ampacidad in CONDUCTORES_COBRE_A_75C:
         if ampacidad >= interruptor_a:
             return conductor, ampacidad
-    raise ValueError("No se encontró un conductor válido en la tabla base.")
+    raise ValueError(
+        f"No se encontró un conductor válido en la tabla base para un interruptor de {interruptor_a} A."
+    )
 
 
 def calcular_circuito(
